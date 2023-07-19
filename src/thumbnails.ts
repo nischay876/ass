@@ -12,9 +12,9 @@ const { diskFilePath }: Config = fs.readJsonSync(path('config.json'));
 
 // Thumbnail parameters
 const THUMBNAIL = {
-	QUALITY: 75,
-	WIDTH: 200 * 2,
-	HEIGHT: 140 * 2,
+	QUALITY: 70,
+	WIDTH: 1920,
+	HEIGHT: 1080,
 }
 
 /**

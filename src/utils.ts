@@ -14,13 +14,19 @@ import logger from './logger';
 import { Request } from 'express';
 import { isProd as ip } from '@tycrek/joint';
 const { HTTP, HTTPS, KILOBYTES } = require('../MagicNumbers.json');
+import { HttpRequest } from "@aws-sdk/protocol-http";
+import { S3RequestPresigner } from "@aws-sdk/s3-request-presigner";
+import { parseUrl } from "@aws-sdk/url-parser";
+import { Sha256 } from "@aws-crypto/sha256-browser";
+import { Hash } from "@aws-sdk/hash-node";
+import { formatUrl } from "@aws-sdk/util-format-url";
 
 // Catch config.json not existing when running setup script
 try {
 	// todo: fix this
 	const configPath = Path.join(process.cwd(), 'config.json');
 	if (!fs.existsSync(configPath)) throw new Error('Config file not found');
-	var { useSsl, port, domain, isProxied, diskFilePath, s3bucket, s3endpoint, s3usePathStyle }: Config = fs.readJsonSync(configPath);
+	var { useSsl, port, domain, isProxied, diskFilePath, s3bucket, s3endpoint, s3usePathStyle, s3accessKey, s3secretKey }: Config = fs.readJsonSync(configPath);
 } catch (ex) {
 	// @ts-ignore
 	if (ex.code !== 'MODULE_NOT_FOUND' || !ex.toString().includes('Unexpected end')) console.error(ex);
@@ -34,12 +40,27 @@ export function getTrueDomain(d = domain) {
 	return d.concat((port === HTTP || port === HTTPS || isProxied) ? '' : `:${port}`);
 }
 
-export function getS3url(s3key: string, ext: string) {
-	return `https://${s3usePathStyle ? `${s3endpoint}/${s3bucket}` : `${s3bucket}.${s3endpoint}`}/${s3key}${ext}`;
+export async function getS3url(s3key: string, ext: string) {
+	const s3ObjectUrl = parseUrl(`https://${s3usePathStyle ? `${s3endpoint}/${s3bucket}` : `${s3bucket}.${s3endpoint}`}/${s3key}${ext}`);
+	const presigner = new S3RequestPresigner({
+		credentials: {
+			accessKeyId: s3accessKey,
+			secretAccessKey: s3secretKey,
+		},
+		region: "auto",
+		sha256: Hash.bind(null, "sha256"), // In Node.js
+	});
+	const s3geturl = await presigner.presign(new HttpRequest(s3ObjectUrl));
+	return (formatUrl(s3geturl));
 }
+
 
 export function getDirectUrl(resourceId: string) {
 	return `${getTrueHttp()}${getTrueDomain()}/${resourceId}/direct`;
+}
+
+export function getDirectMapUrl(s3key: string, ext: string) {
+	return	`https://link.storjshare.io/13qbr63aW27wKnMZ8FYz1DovRW8bJdxHUWuA1bAhsu9qFVmx2EJWQx8c5y8XB9UwDxDgKJr7ZkKJv99BqPSxUNznLX5oeS9Zs74axJEZ6sHVEocceWSiKSfRi8KwE3UFhesRRawWuJGy1MSD5aLN8V7oD9s389i8KUr8MqcB8NruBD8LdqNLhz64xLP27qHEy9L9ksg6DxLKqUSfH114kaejKkPiC9VDU2UxoU4MyK9cCW9i9P9wDVRigjRxiS3BVFddSgJtBLMSnSnxfuBKMdLbLUPPG5yhm4T2qUXFmrf4bQW3xWH3jRqLUgQKTGMy7CqYwy6sjXytnEnK5jgfJ/demo-bucket/${s3key}${ext}?map=1`;
 }
 
 export function randomHexColour() { // From: https://www.geeksforgeeks.org/javascript-generate-random-hex-codes-color/
@@ -98,6 +119,7 @@ module.exports = {
 	getTrueDomain,
 	getS3url,
 	getDirectUrl,
+	getDirectMapUrl,
 	getResourceColor,
 	formatTimestamp,
 	formatBytes,
@@ -116,8 +138,8 @@ module.exports = {
 	}),
 	generateToken: () => token(),
 	generateId,
-	downloadTempS3: (file: FileData) => new Promise((resolve: Function, reject) =>
-		fetch(getS3url(file.randomId, file.ext))
+	downloadTempS3: (file: FileData) => new Promise(async (resolve: Function, reject) =>
+		fetch(await getS3url(file.randomId, file.ext))
 			.then((f2) => f2.body!.pipe(fs.createWriteStream(Path.join(__dirname, diskFilePath, sanitize(file.originalname))).on('close', () => resolve())))
 			.catch(reject)),
 }

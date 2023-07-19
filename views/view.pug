@@ -1,46 +1,78 @@
-html
-	head
-		title!=title
-		include head
-		if color !== null
-			style.
-				.res-media { border-color: #{color}; }
-
-		// Open Graph (https://ogp.me/)
-		meta(property='og:type' content=ogtype)
-		meta(property=urlType content=discordUrl)
-		.
-			!{opengraph}
-
-		// oEmbed (https://oembed.com/)
-		link(href=oembedUrl title='oEmbed' rel='alternate' type='application/json+oembed')
-
-		// Direct resource redirect
-		if viewDirect
-			style.
-				* { display: none !important; }
-			meta(http-equiv='refresh' content=`0; url='${resourceAttr.src}'`)
-
-	body.font-main.bg-page
-		.w-full.h-full.flex.justify-center.items-center.text-center
-			.bg-viewer.rounded-24
-				h4.mx-4.mt-6.mb-4.text-3xl.font-main.text-primary!=title
-				figure.mx-10.my-4.flex.flex-col.align-items-center.justify-center
-					.flex.justify-center
-						if fileIs.video
-							video.res-media(controls loop muted playsinline preload='metadata')&attributes(resourceAttr)
-						else if fileIs.image
-							img.res-media(decoding='async')&attributes(resourceAttr)
-						else if fileIs.audio
-							audio.res-media(controls loop preload='metadata')&attributes(resourceAttr)
-						else
-							code!=mimetype
-					figcaption
-						br
-						span.text-2xl.text-primary Uploaded by #[strong!=uploader]
-						br
-						span.text-secondary #{timestamp} (#{size})
-						br
-						span: a.link(href='#' onclick=`window.location = '${resourceAttr.src}?download=yes'; return false;` download=title) Download
-				if showAd
-					.mx-4.mb-8.text-footer.text-secondary: p Image hosted by #[a.link(href='https://github.com/tycrek/ass' target='_blank'): strong ass], the simple self-hosted ShareX server
+doctype html
+head
+  meta(charset='UTF-8')
+  meta(name='viewport' content='width=device-width, initial-scale=1.0')
+  title!=title
+  if fileIs.video
+        link(href='https://vjs.zencdn.net/8.3.0/video-js.css' rel='stylesheet')
+        script(src='https://vjs.zencdn.net/ie8/1.1.2/videojs-ie8.min.js')
+        script(src='https://vjs.zencdn.net/8.3.0/video.min.js')
+        script(src='https://cdn.tailwindcss.com')
+        script(type='text/javascript').
+  script(src='https://cdn.tailwindcss.com')
+  style.
+    body {
+    background-color: #1a202c;
+    }
+    p {
+    text-align: center;
+    }
+.flex.items-center.justify-center.h-screen
+  .max-w-lg.bg-gray-900.rounded-lg.shadow-lg.p-6
+    h1.text-white.text-2xl.mb-4.text-center!=title
+    .flex.items-center.justify-center
+    if fileIs.video
+      center
+        img.h-auto.max-w-full.rounded-lg.shadow-none.transition-shadow.duration-300.ease-in-out(onclick='openModal()' src=`${ThumbnailUrl}` alt='Your Image' class='hover:shadow-lg hover:shadow-black/30')
+    else if fileIs.image
+      center
+        img.h-auto.max-w-full.rounded-lg.shadow-none.transition-shadow.duration-300.ease-in-out(onclick='openModal()' src=`${resourceAttr.src}` alt='Your Image' class='hover:shadow-lg hover:shadow-black/30')
+    .mt-4.text-white
+      .flex.items-center.justify-center.space-x-4
+        a.text-white(class='hover:text-gray-400' target='_blank' href='https://link.storjshare.io/s/15M6fjnUPHBJnVt3KofVPkEHb8P9AbE48hP6135x3k9yFnHJkno7zkXCD44poevuBaGjYUjYH8fXrzyYdZHhDCizj9iryNh76bub3Lvdcnxo1Ao4pnLnXjsA5QFqJDGgowECm5ibFRJQkq6rfF3RyV3X3GwQTXThm5aLKjLTLz8RXfcCwfyfEXn4SqAwFr72PuScRK3QrjPTcxLkaiYeQBXHMgjUo9xSbT68tWR7N6eBYtD53zAVMd1HoB8KCCqAefUApfHUjVsJTHooVih293hre3QZaHeng/files/0W3VPwahdwahgAQ45iLU6TMxhVnb43D4.png?download=yes' download='opera_kOHA3TCNnD.png') Download
+        a |
+        a.text-white(class='hover:text-gray-400' onclick='openModal()') View
+      p Uploaded by: #[strong!=uploader]
+      p Size: #{size}
+      p Date of Upload: #{timestamp}
+    .mt-4
+      img.w-full.h-64(onclick='openModalMap()' src=`${MapUrl.src}` frameborder='0' allowfullscreen='')
+#modal.fixed.inset-0.bg-black.bg-opacity-75.flex.items-center.justify-center.hidden
+  .max-w-full.h-full.flex.flex-col.items-center.justify-center
+    h1.text-white.text-2xl.mb-4.text-center!=title
+    if fileIs.image
+      img.h-auto.max-w-full(src=`${resourceAttr.src}` alt='Your Image')
+    else if fileIs.video
+      .video-container
+        video#my-video.video-js(vjs-fluid="true" controls width="640" preload="auto" data-setup='{}')
+          source(src=resourceAttr.src type='video/mp4')
+          p.vjs-no-js
+          | To view this video please enable JavaScript, and consider upgrading to a
+          | web browser that
+          a(href='https://videojs.com/html5-video-support/' target='_blank') supports HTML5 video
+    button.absolute.top-0.right-0.mt-4.mr-4.text-gray-400(onclick='closeModal()' class='hover:text-white focus:outline-none')
+      svg.h-6.w-6(xmlns='http://www.w3.org/2000/svg' fill='none' viewbox='0 0 24 24' stroke='currentColor')
+        path(stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 18L18 6M6 6l12 12')
+#modalmap.fixed.inset-0.bg-black.bg-opacity-75.flex.items-center.justify-center.hidden
+  .max-w-full.h-full.flex.flex-col.items-center.justify-center
+    h1.text-white.text-2xl.mb-4.text-center!=title
+    img.max-w-full.max-h-full(style="background-color: none;" src=MapUrl.src alt='Your Image')
+    button.absolute.top-0.right-0.mt-4.mr-4.text-gray-400(onclick='closeModalMap()' class='hover:text-white focus:outline-none')
+      svg.h-6.w-6(xmlns='http://www.w3.org/2000/svg' fill='none' viewbox='0 0 24 24' stroke='currentColor')
+        path(stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 18L18 6M6 6l12 12')
+script.
+  function openModal() {
+  document.getElementById('modal').classList.remove('hidden');
+  }
+  function closeModal() {
+  document.getElementById('modal').classList.add('hidden');
+    const video = document.querySelector("#my-video.video-js");
+    video.pause();
+    video.currentTime = 0;
+  }
+  function openModalMap() {
+  document.getElementById('modalmap').classList.remove('hidden');
+  }
+  function closeModalMap() {
+  document.getElementById('modalmap').classList.add('hidden');
+  }

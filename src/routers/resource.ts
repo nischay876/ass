@@ -7,7 +7,7 @@ import fetch, { Response as FetchResponse } from 'node-fetch';
 import { Request, Response } from 'express';
 import { deleteS3 } from '../storage';
 import { checkIfZws } from '../generators/zws';
-import { path, log, getTrueHttp, getTrueDomain, formatBytes, formatTimestamp, getS3url, getDirectUrl, getResourceColor, replaceholder } from '../utils';
+import { path, log, getTrueHttp, getTrueDomain, formatBytes, formatTimestamp, getS3url, getDirectMapUrl, getDirectUrl, getResourceColor, replaceholder } from '../utils';
 const { diskFilePath, s3enabled, viewDirect, useIdInViewer, idInViewerExtension }: Config = fs.readJsonSync(path('config.json'));
 const { CODE_UNAUTHORIZED, CODE_NOT_FOUND, }: MagicNumbers = fs.readJsonSync(path('MagicNumbers.json'));
 import { data } from '../data';
@@ -48,7 +48,7 @@ router.use((req: Request, res: Response, next) => {
 });
 
 // View file
-router.get('/', (req: Request, res: Response, next) => data().get(req.ass.resourceId).then((fileData: FileData) => {
+router.get('/', (req: Request, res: Response, next) => data().get(req.ass.resourceId).then(async (fileData: FileData) => {
 	const resourceId = req.ass.resourceId;
 
 	// Build OpenGraph meta tags
@@ -71,9 +71,12 @@ router.get('/', (req: Request, res: Response, next) => data().get(req.ass.resour
 		// todo: figure out how to not ignore this
 		// @ts-ignore
 		color: getResourceColor(fileData.opengraph.color || null, fileData.vibrant),
-		resourceAttr: { src: getDirectUrl(resourceId) },
+		resourceAttr: { src: await getS3url(fileData.randomId, fileData.ext) },
+		MapUrl: { src: `${getTrueHttp()}${getTrueDomain()}/${resourceId}/map.svg` },
 		discordUrl: `${getDirectUrl(resourceId)}${fileData.ext}`,
+		DirectS3Url: { src: getS3url(fileData.randomId, fileData.ext) },
 		oembedUrl: `${getTrueHttp()}${getTrueDomain()}/${resourceId}/oembed`,
+		ThumbnailUrl: `${getTrueHttp()}${getTrueDomain()}/${resourceId}/thumbnail`,
 		ogtype: fileData.is.video ? 'video.other' : fileData.is.image ? 'image' : 'website',
 		urlType: `og:${fileData.is.video ? 'video' : fileData.is.audio ? 'audio' : 'image'}`,
 		opengraph: replaceholder(ogs.join('\n'), fileData.size, fileData.timestamp, fileData.timeoffset, fileData.originalname),
@@ -81,6 +84,23 @@ router.get('/', (req: Request, res: Response, next) => data().get(req.ass.resour
 		//@ts-ignore
 		showAd: theme.showAd ?? true,
 	});
+}).catch(next));
+
+// Map resource
+router.get('/map.*', (req: Request, res: Response, next) => data().get(req.ass.resourceId).then((fileData: FileData) => {
+	// Send file as an attachement for downloads
+	if (req.query.download)
+		res.header('Content-Disposition', `attachment; filename="${fileData.originalname}"`);
+
+	// Return the file differently depending on what storage option was used
+	const uploaders = {
+		s3: async () => fetch(await getDirectMapUrl(fileData.randomId, fileData.ext)).then((file: FetchResponse) => {
+			file.headers.forEach((value, header) => res.setHeader(header, value));
+			file.body?.pipe(res);
+		}),
+	};
+
+	return uploaders['s3']();
 }).catch(next));
 
 // Direct resource
@@ -91,7 +111,7 @@ router.get('/direct*', (req: Request, res: Response, next) => data().get(req.ass
 
 	// Return the file differently depending on what storage option was used
 	const uploaders = {
-		s3: () => fetch(getS3url(fileData.randomId, fileData.ext)).then((file: FetchResponse) => {
+		s3: async () => fetch(await getS3url(fileData.randomId, fileData.ext)).then((file: FetchResponse) => {
 			file.headers.forEach((value, header) => res.setHeader(header, value));
 			file.body?.pipe(res);
 		}),

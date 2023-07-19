@@ -71,7 +71,7 @@ router.get('/', (req: Request, res: Response, next) => data().get(req.ass.resour
 		// todo: figure out how to not ignore this
 		// @ts-ignore
 		color: getResourceColor(fileData.opengraph.color || null, fileData.vibrant),
-		resourceAttr: { src: await getS3url(fileData.randomId, fileData.ext) },
+		resourceAttr: { src: getDirectUrl(resourceId) },
 		MapUrl: { src: `${getTrueHttp()}${getTrueDomain()}/${resourceId}/map.svg` },
 		discordUrl: `${getDirectUrl(resourceId)}${fileData.ext}`,
 		DirectS3Url: { src: getS3url(fileData.randomId, fileData.ext) },

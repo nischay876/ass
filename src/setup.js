@@ -15,6 +15,7 @@ const config = {
 	useIdInViewer: false,
 	idInViewerExtension: false,
 	dataEngine: '@tycrek/papito',
+	storjApiKey: "",
 	frontendName: 'ass-x',
 	savePerDay: false,
 	adminWebhookEnabled: false,

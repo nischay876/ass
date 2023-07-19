@@ -26,7 +26,7 @@ try {
 	// todo: fix this
 	const configPath = Path.join(process.cwd(), 'config.json');
 	if (!fs.existsSync(configPath)) throw new Error('Config file not found');
-	var { useSsl, port, domain, isProxied, diskFilePath, s3bucket, s3endpoint, s3usePathStyle, s3accessKey, s3secretKey }: Config = fs.readJsonSync(configPath);
+	var { useSsl, port, domain, isProxied, diskFilePath, s3bucket, storjApiKey, s3endpoint, s3usePathStyle, s3accessKey, s3secretKey }: Config = fs.readJsonSync(configPath);
 } catch (ex) {
 	// @ts-ignore
 	if (ex.code !== 'MODULE_NOT_FOUND' || !ex.toString().includes('Unexpected end')) console.error(ex);
@@ -60,7 +60,7 @@ export function getDirectUrl(resourceId: string) {
 }
 
 export function getDirectMapUrl(s3key: string, ext: string) {
-	return	`https://link.storjshare.io/13qbr63aW27wKnMZ8FYz1DovRW8bJdxHUWuA1bAhsu9qFVmx2EJWQx8c5y8XB9UwDxDgKJr7ZkKJv99BqPSxUNznLX5oeS9Zs74axJEZ6sHVEocceWSiKSfRi8KwE3UFhesRRawWuJGy1MSD5aLN8V7oD9s389i8KUr8MqcB8NruBD8LdqNLhz64xLP27qHEy9L9ksg6DxLKqUSfH114kaejKkPiC9VDU2UxoU4MyK9cCW9i9P9wDVRigjRxiS3BVFddSgJtBLMSnSnxfuBKMdLbLUPPG5yhm4T2qUXFmrf4bQW3xWH3jRqLUgQKTGMy7CqYwy6sjXytnEnK5jgfJ/demo-bucket/${s3key}${ext}?map=1`;
+	return	`https://link.storjshare.io/${storjApiKey}/${s3bucket}/${s3key}${ext}?map=1`;
 }
 
 export function randomHexColour() { // From: https://www.geeksforgeeks.org/javascript-generate-random-hex-codes-color/

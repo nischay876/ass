@@ -54,6 +54,9 @@ export async function getS3url(s3key: string, ext: string) {
 	return (formatUrl(s3geturl));
 }
 
+export function getS3Turl(s3key: string) {
+	return `https://${s3usePathStyle ? `${s3endpoint}/${s3bucket}` : `${s3bucket}.${s3endpoint}`}/thumbnails/${s3key}.png`;
+}
 
 export function getDirectUrl(resourceId: string) {
 	return `${getTrueHttp()}${getTrueDomain()}/${resourceId}/direct`;
@@ -124,6 +127,7 @@ module.exports = {
 	formatTimestamp,
 	formatBytes,
 	replaceholder,
+	getS3Turl,
 	randomHexColour,
 	sanitize,
 	renameFile: (req: Request, newName: string) => new Promise((resolve: Function, reject) => {

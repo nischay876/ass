@@ -18,9 +18,9 @@ const s3 = new aws.S3({
 
 // Thumbnail parameters
 const THUMBNAIL = {
-	QUALITY: 75,
-	WIDTH: 200 * 2,
-	HEIGHT: 140 * 2,
+	QUALITY: 70,
+	WIDTH: 1920,
+	HEIGHT: 1080,
 }
 
 /**
@@ -32,8 +32,8 @@ function getCommand(src: String, dest: String) {
 		'-v', (isProd ? 'error' : 'debug'), // Log level
 		'-i', src,                                                         // Input file
 		'-ss', '00:00:01.000',                                             // Timestamp of frame to grab
+                '-vf', `scale=${THUMBNAIL.WIDTH}:${THUMBNAIL.HEIGHT}:force_original_aspect_ratio=increase,crop=${THUMBNAIL.WIDTH}:${THUMBNAIL.HEIGHT}`, // Dimensions of output file
 		'-frames:v', '1',                                                  // Number of frames to grab
-		'-s', `${THUMBNAIL.WIDTH}x${THUMBNAIL.HEIGHT}`,                    // Dimensions of output file
 		dest                                                               // Output file
 	]);
 }

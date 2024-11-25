@@ -42,6 +42,12 @@
     "url": "https://patreon.com/tycrek"
   },
   "dependencies": {
+    "@aws-crypto/sha256-browser": "^5.0.0",
+    "@aws-sdk/hash-node": "^3.370.0",
+    "@aws-sdk/protocol-http": "^3.370.0",
+    "@aws-sdk/s3-request-presigner": "^3.370.0",
+    "@aws-sdk/url-parser": "^3.370.0",
+    "@aws-sdk/util-format-url": "^3.370.0",
     "@tinycreek/postcss-font-magician": "^4.1.0",
     "@tsconfig/node16": "^1.0.1",
     "@tycrek/discord-hookr": "^0.1.0",
